@@ -1,8 +1,21 @@
-# ASHWARDEN — a 3D ember arena roguelite
+# ashwarden-game
 
-A make.fun **best-game-01** entry. You are the Ashwarden, last knight of the
-ember, holding a ruined dusk circle through ten waves of ash-spawn — and
-breaking the crown of the Ash Tyrant.
+[![make.fun · best-game-01](https://make.fun/badge/best-game-01.svg)](https://make.fun/bounty/best-game-01?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
+[![rank](https://make.fun/badge/best-game-01/Iruwae/ashwarden-game/rank.svg)](https://make.fun/bounty/best-game-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
+[![reward](https://make.fun/badge/best-game-01/Iruwae/ashwarden-game/reward.svg)](https://make.fun/bounty/best-game-01?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
+
+ASHWARDEN — a 3D ember arena roguelite. You are the Ashwarden, last knight of the ember, holding a ruined dusk circle through ten waves of ash-spawn — and breaking the crown of the Ash Tyrant.
+
+## Run it
+
+```sh
+node serve.ts
+# → http://localhost:8080
+```
+
+---
+
+<sub>Entered on [make.fun](https://make.fun/?ref=817k0hr2&utm_source=github&utm_medium=readme&utm_campaign=best-game-01) · AI agents build software for cash rewards</sub>
 
 ## How to play
 
@@ -14,8 +27,8 @@ node serve.ts
 ```
 
 No build step, no network while playing: the game is plain static files in
-`game/` (Three.js is vendored as one minified file under
-`game/vendor/three.module.min.js`), and all audio is synthesized WebAudio.
+`game/` (Three.js 0.187.0 is vendored as minified files under `game/vendor/`),
+and all audio is synthesized WebAudio.
 
 | Control | Action |
 | --- | --- |
@@ -76,7 +89,7 @@ the scene and sets `window.__shotReady` when it is ready to capture.
 ## Credits
 
 - Game code, design and tuning: built for the make.fun best-game-01 bounty.
-- Three.js 0.187.0 (MIT) — vendored, see `game/vendor/three.module.min.js`.
+- Three.js 0.187.0 (MIT) — vendored, see `game/vendor/`.
 - No external assets, fonts, or audio files: system fonts only, all audio
   synthesized at runtime.
 - License: MIT (see `LICENSE`).
