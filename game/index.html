@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASHWARDEN — a 3D ember arena roguelite</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1230; }
+  body { font-family: Georgia, 'Times New Roman', serif; color: #f3e6d0; }
+  #app, #app canvas { position: fixed; inset: 0; }
+  #app canvas { display: block; cursor: crosshair; }
+
+  /* ---- full-screen FX layers ---- */
+  #vignette { position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(180,0,0,0.55) 100%);
+    transition: opacity .2s; }
+  #flash { position: fixed; inset: 0; pointer-events: none; z-index: 6; opacity: 0; transition: opacity .12s; }
+  #fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 7; overflow: hidden; }
+  .dmgnum { position: absolute; transform: translate(-50%, -50%); font-family: Georgia, serif;
+    font-weight: bold; font-size: 20px; color: #ffd27a; text-shadow: 0 0 6px #ff7a1a, 0 2px 2px #000;
+    pointer-events: none; animation: dmgpop .7s ease-out forwards; white-space: nowrap; }
+  .dmgnum.crit { color: #ff5d5d; font-size: 28px; }
+  .dmgnum.chain { color: #9fd8ff; font-size: 16px; }
+  @keyframes dmgpop { 0% { margin-top: 0; opacity: 1; } 100% { margin-top: -46px; opacity: 0; } }
+
+  /* ---- HUD ---- */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; display: none;
+    font-family: Georgia, serif; }
+  .hud-panel { position: absolute; text-shadow: 0 2px 4px rgba(0,0,0,.8); }
+  #hud-tl { top: 16px; left: 18px; width: 280px; }
+  .hp-label { font-size: 13px; letter-spacing: 2px; color: #ffb347; margin-bottom: 4px; }
+  #hp-bar { height: 16px; border: 1px solid #ffb347; background: rgba(0,0,0,.55); border-radius: 8px; overflow: hidden; }
+  #hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #ff5d1f, #ffb347); transition: width .15s; }
+  #hp-fill.low { background: linear-gradient(90deg, #c81e1e, #ff5d5d); }
+  #hp-text { font-size: 12px; margin-top: 3px; color: #f3e6d0; }
+  #shield-text { font-size: 13px; color: #9fd8ff; margin-top: 2px; min-height: 16px; }
+  #blessing-icons { font-size: 22px; letter-spacing: 6px; margin-top: 6px; color: #ffd27a; }
+
+  #hud-tc { top: 14px; left: 50%; transform: translateX(-50%); text-align: center; }
+  #wave-text { font-size: 22px; letter-spacing: 4px; color: #ffb347; }
+  #score-line { font-size: 15px; margin-top: 2px; color: #f3e6d0; }
+  #score-line b { color: #ffd27a; }
+  #boss-wrap { display: none; margin-top: 10px; width: 420px; }
+  #boss-name { font-size: 15px; letter-spacing: 3px; color: #ff7a1a; margin-bottom: 4px; }
+  #boss-bar { height: 12px; border: 1px solid #ff7a1a; background: rgba(0,0,0,.6); border-radius: 6px; overflow: hidden; }
+  #boss-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #c81e1e, #ff7a1a); transition: width .2s; }
+
+  #hud-tr { top: 16px; right: 18px; text-align: right; font-size: 13px; color: #cbb8ff; line-height: 1.7; }
+  #mute-btn { pointer-events: auto; background: rgba(0,0,0,.5); border: 1px solid #8a76c9; color: #f3e6d0;
+    font-size: 18px; padding: 4px 10px; border-radius: 6px; cursor: pointer; margin-bottom: 4px; }
+  #hud-bl { bottom: 16px; left: 18px; font-size: 13px; color: #cbb8ff; line-height: 1.7; }
+
+  #banner { position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%) scale(.9);
+    text-align: center; z-index: 11; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; }
+  #banner.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .banner-title { font-size: 52px; letter-spacing: 10px; color: #ffb347; text-shadow: 0 0 24px #ff7a1a, 0 4px 8px #000; }
+  .banner-sub { font-size: 18px; color: #f3e6d0; margin-top: 6px; text-shadow: 0 2px 4px #000; }
+
+  /* ---- overlay screens ---- */
+  #overlay { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+    background: rgba(12, 8, 26, 0.72); backdrop-filter: blur(2px); }
+  .screen { display: none; flex-direction: column; align-items: center; text-align: center; max-width: 720px; padding: 24px; }
+  .game-title { font-size: 84px; letter-spacing: 14px; color: #ffb347;
+    text-shadow: 0 0 34px #ff7a1a, 0 6px 12px #000; }
+  .game-sub { font-size: 20px; font-style: italic; color: #d9c8ff; margin: 8px 0 18px; }
+  .game-desc { font-size: 16px; line-height: 1.7; color: #f3e6d0; max-width: 560px; }
+  .controls { font-size: 14px; line-height: 2; color: #cbb8ff; margin: 18px 0; }
+  .controls b { color: #ffd27a; }
+  .best-line { font-size: 15px; color: #ffd27a; margin-bottom: 14px; letter-spacing: 1px; }
+  .btn { pointer-events: auto; font-family: Georgia, serif; font-size: 22px; letter-spacing: 3px;
+    color: #1a1230; background: linear-gradient(180deg, #ffb347, #ff7a1a); border: none; border-radius: 10px;
+    padding: 14px 42px; cursor: pointer; box-shadow: 0 0 24px rgba(255, 138, 46, .55), 0 4px 0 #8a3c00; }
+  .btn:hover { filter: brightness(1.1); }
+  .btn:active { transform: translateY(2px); box-shadow: 0 0 18px rgba(255,138,46,.5), 0 2px 0 #8a3c00; }
+  .btn.ghost { background: transparent; color: #ffb347; border: 1px solid #ffb347; box-shadow: none; font-size: 16px; padding: 10px 26px; margin-top: 12px; }
+  .screen h2 { font-size: 56px; letter-spacing: 8px; color: #ffb347; text-shadow: 0 0 24px #ff7a1a, 0 4px 8px #000; }
+  .screen h2.red { color: #ff5d5d; text-shadow: 0 0 24px #c81e1e, 0 4px 8px #000; }
+  .screen p { font-size: 16px; line-height: 1.7; margin: 10px 0 18px; }
+  .stats { width: 340px; margin: 6px 0 20px; font-size: 16px; }
+  .stat-row { display: flex; justify-content: space-between; padding: 5px 2px; border-bottom: 1px solid rgba(255,179,71,.25); }
+  .stat-row b { color: #ffd27a; }
+  #blessing-cards { display: flex; gap: 16px; margin: 20px 0; }
+  .blessing-card { font-family: Georgia, serif; width: 190px; padding: 20px 14px; cursor: pointer;
+    background: rgba(40, 26, 66, .9); border: 1px solid #ffb347; border-radius: 12px; color: #f3e6d0;
+    transition: transform .12s, box-shadow .12s; }
+  .blessing-card:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 0 24px rgba(255,138,46,.6); }
+  .b-icon { font-size: 40px; color: #ffb347; }
+  .b-name { font-size: 18px; margin: 8px 0 6px; color: #ffd27a; }
+  .b-desc { font-size: 14px; line-height: 1.5; color: #e8dcff; min-height: 42px; }
+  .b-key { font-size: 12px; color: #8a76c9; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="vignette"></div>
+<div id="flash"></div>
+<div id="fx-layer"></div>
+
+<div id="hud">
+  <div class="hud-panel" id="hud-tl">
+    <div class="hp-label">❤ HEALTH <span id="shield-text"></span></div>
+    <div id="hp-bar"><div id="hp-fill"></div></div>
+    <div id="hp-text">100 / 100</div>
+    <div id="blessing-icons" title=""></div>
+  </div>
+  <div class="hud-panel" id="hud-tc">
+    <div id="wave-text">WAVE 1 / 10</div>
+    <div id="score-line">SCORE <b id="score-text">0</b> &nbsp;◆ <b id="ember-text">0</b> ember &nbsp;☠ <span id="kills-text">0</span></div>
+    <div id="boss-wrap">
+      <div id="boss-name">THE ASH TYRANT</div>
+      <div id="boss-bar"><div id="boss-fill"></div></div>
+    </div>
+  </div>
+  <div class="hud-panel" id="hud-tr">
+    <button id="mute-btn" title="Mute (M)">🔊</button>
+    <div>P pause &nbsp;·&nbsp; M mute</div>
+    <div>WASD move · mouse aim</div>
+    <div>hold click / Space to fire</div>
+  </div>
+  <div class="hud-panel" id="hud-bl">Best score is saved on this machine.<br>Defeat the Ash Tyrant on wave 10 to win.</div>
+</div>
+<div id="banner"></div>
+
+<div id="overlay">
+  <div class="screen" id="screen-title">
+    <div class="game-title">ASHWARDEN</div>
+    <div class="game-sub">a 3D ember arena roguelite</div>
+    <div class="game-desc">Dusk falls on the ruined circle. You are the Ashwarden, last knight of the
+      ember — hold the arena through ten waves, gather the embers of the fallen, and break
+      the crown of the Ash Tyrant.</div>
+    <div class="controls">
+      <b>WASD / arrows</b> move &nbsp;·&nbsp; <b>mouse</b> aim &nbsp;·&nbsp; <b>hold left click / Space</b> fire ember bolts<br>
+      <b>1 / 2 / 3</b> pick a blessing &nbsp;·&nbsp; <b>P</b> pause &nbsp;·&nbsp; <b>M</b> mute &nbsp;·&nbsp; <b>R</b> restart
+    </div>
+    <div class="best-line">BEST SCORE: <span id="best-score">0</span></div>
+    <button class="btn" id="start-btn">ENTER THE CIRCLE</button>
+  </div>
+
+  <div class="screen" id="screen-blessing">
+    <h2>WAVE CLEARED</h2>
+    <p>The embers bow to you. Choose one blessing:</p>
+    <div id="blessing-cards"></div>
+  </div>
+
+  <div class="screen" id="screen-pause">
+    <h2>PAUSED</h2>
+    <p>The embers wait.</p>
+    <button class="btn" id="resume-btn">RESUME</button>
+    <button class="btn ghost" id="quit-btn">QUIT TO TITLE</button>
+  </div>
+
+  <div class="screen" id="screen-gameover">
+    <h2 class="red">THE EMBER FADES</h2>
+    <p>The Ashwarden falls — but the circle remembers.</p>
+    <div class="stats" id="final-stats"></div>
+    <button class="btn" id="restart-btn">TRY AGAIN (R)</button>
+  </div>
+
+  <div class="screen" id="screen-victory">
+    <h2>THE TYRANT FALLS</h2>
+    <p>Dawn breaks over the ruined circle. The Ashwarden stands — the ember is yours.</p>
+    <div class="stats" id="victory-stats"></div>
+    <button class="btn" id="again-btn">PLAY AGAIN (R)</button>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js" } }
+</script>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

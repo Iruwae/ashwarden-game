@@ -1,0 +1,48 @@
+// ASHWARDEN — tuning constants. One place for every number a designer would tweak.
+export const CFG = {
+  arenaRadius: 26,
+  player: {
+    radius: 0.9,
+    speed: 11.5,
+    accel: 90,
+    friction: 8,
+    hp: 100,
+    fireInterval: 0.22,
+    boltSpeed: 34,
+    boltDamage: 12,
+    boltRadius: 0.28,
+    pickupRadius: 2.6,
+    magnetRadius: 7,
+    iframe: 0.7,
+  },
+  enemy: {
+    drifter: { hp: 22, speed: 5.2, radius: 0.9, damage: 10, score: 100, ember: 3, color: 0x9fb4ff },
+    spitter: { hp: 30, speed: 3.4, radius: 1.0, damage: 8, score: 150, ember: 4, color: 0xc77dff, range: 17, shootCd: 2.4 },
+    brute:   { hp: 90, speed: 2.6, radius: 1.5, damage: 18, score: 250, ember: 7, color: 0xff5d5d },
+    boss:    { hp: 900, speed: 2.2, radius: 2.6, damage: 22, score: 2000, ember: 40, color: 0xff7a1a },
+  },
+  wave: {
+    baseCount: 5,
+    perWave: 2,
+    spawnInterval: 0.9,
+    betweenWaves: 2.2,
+    bossWaves: [5, 10],
+    maxWave: 10,
+  },
+  juice: {
+    shakeDecay: 1.4,
+    maxShakeOffset: 0.55,
+    hitStopKill: 0.055,
+    hitStopBoss: 0.12,
+    hitStopPlayerHurt: 0.09,
+  },
+  camera: { height: 22, tilt: 0.62, follow: 0.35, fov: 50 },
+  colors: {
+    sky: 0x1a1230,
+    fog: 0x241a3d,
+    floor: 0x3a2f52,
+    rune: 0xff8c2e,
+    ember: 0xffa63d,
+    playerCore: 0xffb347,
+  },
+};
