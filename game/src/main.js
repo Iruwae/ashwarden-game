@@ -185,10 +185,23 @@ export class Game {
     this._pendingWaveT = 1.0;
   }
 
+  // Keep the top HUD bar in sync on end screens too: hud.update() only runs
+  // during play/blessing/pause, so without this the bar behind the victory /
+  // game-over overlay shows stale values (e.g. WAVE 1 / SCORE 0 on a staged
+  // victory shot). In live play it is already current; this is a no-op there.
+  refreshHud() {
+    this.hud.update({
+      hp: this.player.hp, maxHp: this.player.maxHp, shield: this.player.shield,
+      wave: Math.max(1, this.run.wave), score: this.run.score, ember: this.run.ember,
+      kills: this.run.kills, blessings: this.run.blessingsTaken,
+    });
+  }
+
   gameOver() {
     this.run.state = 'gameover';
     const isBest = this.run.finish();
     this.audio.gameover();
+    this.refreshHud();
     this.hud.gameOver(this.run.stats());
     this.hud.setBest(this.run.best);
     this.hud.showScreen('gameover');
@@ -200,6 +213,7 @@ export class Game {
     this.run.state = 'victory';
     const isBest = this.run.finish();
     this.audio.victory();
+    this.refreshHud();
     this.hud.victory(this.run.stats());
     this.hud.setBest(this.run.best);
     this.hud.showScreen('victory');
